@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Recommendation System</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background: linear-gradient(
+        135deg,
+        oklch(66.654% 0.13411 253.298),
+        lch(64.69% 62.59 357.50)
+    );
+    text-align:center;
+    padding-top:40px;
+}
+.box{
+    background:hwb(225 97% 1%);
+    width:660px;
+    margin:auto;
+    padding:100px;
+    border-radius:65px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.1);
+}
+select,button{
+    padding:10px;
+    width:85%;
+    margin:8px 0;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+button{
+    background:#7da6ff;
+    color:#fff;
+    border:none;
+    cursor:pointer;
+}
+ul{
+    list-style:none;
+    padding:0;
+}
+li{
+    background:#f1f5ff;
+    margin:6px;
+    padding:8px;
+    border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>🎯 Recommendation System</h2>
+
+<select id="category" onchange="loadSub()">
+<option value="">Select Category</option>
+<option value="Movie">🎬 Movie</option>
+<option value="Song">🎵 Song</option>
+<option value="Food">🍔 Food</option>
+<option value="Juice">🥤 Juice</option>
+<option value="Dessert">🍰 Dessert</option>
+<option value="Tourist">📍 Tourist Place</option>
+<option value="Dress">👗 Dress</option>
+<option value="Game">🎮 Game</option>
+<option value="WebSeries">📺 WebSeries</option>
+</select>
+
+<select id="subCategory">
+<option value="">Select Sub Category</option>
+</select>
+
+<button onclick="recommend()">Recommend</button>
+<button onclick="recommendMore()">Recommend More</button>
+
+<ul id="result"></ul>
+</div>
+
+<script>
+let start = 0;
+let currentList = [];
+
+const data = {
+
+Movie:{
+    Action:["Jailer","Coolie","Kabali","Kaala","Bahubali","RRR","Anjaan","Baasha","Asuran","Petta"],
+    Romance:["Hi Nanna","Sita Ramam","Dear Comrade","OK Kanmani","Anegan","Romeo Juliet","Maveeran","Oh My Kadavule","Thanga Magan","Geetha Govindam"],
+    Scifi:["Enthiran","2.0","Indru Netru Naalai","Inception","Lik","Adiyea","24","Hero","Tik Tik Tik","Mark Antony"],
+    Comedy:["Thilluku Thuttu","Nanban","Boss Engira Baskaran","Chandramuki 2","Comali","Tourist Family","Kalakalappu","Varuthapadatha Valibar Sangam","Jackpot","Vasuvum Saravananum Onna Padichavanga"], 
+    Horror:["Sivalinga","Pizza","Maya","Chandramuki","Mohini","Pisasu","Ratsasan","Demonte Colony","Aval","Kanchana"] 
+}, 
+
+Song:{ 
+    Soup:["Why this kolaveri","Yean ennai Pirinthai","Ava enna enna thedi vantha anjala","Ennai Kollathey","Ennala maraka mudiyavillai","Po urave","Usure vittu poiyuta","Marapathillai nenje","Kannadi Poove","Venmegam"],
+    Love:["Enna solla(Thanga magan)","Naan un azhaginile","Vizhi moodi yosithal","Pookale satru oivedungal","Maya nathi","Vaaya en veera","Siruki Vaasam","Kaadhal Aasai","Aathadi Aathadi","Roja Kadale"], 
+    Item:["Mascara","Oo Antava","Daddy mummy","Theemthanaka Thillana","En chella peru Apple","Chillax Chillax","En peru Meena kumari","Bombay ponnu","Door no","Thottu Thottu Pesum Sulthane"], 
+    Melody:["Nenjukkul Peidhidum","Mun Andhi Saaral Nee","Vaarayo Vaarayo","En suzhali","Pularadha","En Kaadhal solla neram illai","Nee Kavithaigala","Neethane Neethane","Yaanji Yaanji","Engeyo Paartha Mayakam"] 
+},
+
+Food:{
+    Junk:["Burger","Pizza","French Fries","Noodles","Fried Chicken","Pasta","Chicken Wings","Chicken nuggets","Hot Dog","Mozzarella Sticks"],
+    Homemade:["Sambar Rice","Curd Rice","Chapati","Vegetable Curry","Lemon Rice","Tomato Rice","Spinach Curry","Rasam","Puliogare","Vegetable Biryani"],
+    NonVEG:["Butter Chicken","Mutton Biryani","Fish Curry","Chicken 65","Prawn Masala","Egg Curry","Chicken Biryani","Mutton Chops","Fish Fry","Chicken Roast"],
+    Breakfast:["Idli","Dosa","Pongal","Upma","Poori","Vada","Appam","Idiyappam","Bread Omelette","Kichadi"],
+    Lunch:["Chicken Curry","Biryani","Fried Rice","Mutton Gravy","Fish Curry","Butter milk","Naan","Paneer Butter Masala","Mutton Mandi","Chicken Mandi"], 
+    Dinner:["Chapati","Parotta","Soup","Chicken Rice","Roti","Egg Rice","Dosa","Masala Dosa","Ghee Roast","Paneer Fried Rice"],
+    VEG:["Paneer Butter Masala","Veg Biryani","Veg Fried Rice","Chana Masala","Aloo Gobi","Dal Tadka","Veg Pulao","Palak Paneer","Veg Curry","Veg Noodles"] 
+},
+
+Juice:{
+    Beverage:["Coke","Pepsi","Fanta","Sprite","Mountain Dew","7 Up","Mirinda","Thums Up","Fizz","Bovonto"],
+    Fruit:["Orange Juice","Mango Juice","Apple Juice","Watermelon Juice","Fruit Mixer","Pineapple Juice","Grape Juice","Lemon Juice","Mosambi Juice","Pomegranate Juice"],
+    Milkshake:["Chocolate Shake","Strawberry Shake","Vanilla Shake","Banana Shake","Oreo Shake","Mango Shake","Pineapple Shake","Black Current Shake","Butter Scotch Shake","KitKat Shake"], 
+    Energy:["Red Bull","Monster","Rockstar","Burn","Gatorade","Taurine","Gladiator","Hype Energy","Venom Energy","AMP Energy"],
+    Healthy:["Aloe Vera Juice","Cucumber Juice","Carrot Juice","Beetroot Juice","Spinach Juice","Wheatgrass Juice","Lemon Ginger Honey","Pomegranate Juice","Green Tea","Turmeric Milk"] 
+},
+
+Dessert:{
+    Icecream:["Vanilla","Chocolate","Butterscotch","Strawberry","Black Current","Pista","Belgium Chocolate","Mango","Oreo","KitKat"],
+    Cake:["Black Forest","Red Velvet","Chocolate Cake","White Forest","Pineapple Cake","Fruit Cake","Vanilla Cake","Honey Cake","Cheese Cake","Choco Truffle Cake"],
+    Sweets:["Gulab Jamun","Laddu","Jalebi","Mysore Pak","Rasgulla","Barfi","Kaju Katli","Kesari","Halwa","PaalKova"],
+    Pastry:["Chocolate Pastry","Pineapple Pastry","Strawberry Pastry","Vanilla Pastry","Mango Pastry","Black Forest Pastry","Red Velvet Pastry","Blueberry Pastry","Lemon Pastry","Carrot Pastry"],
+    Pudding:["Chocolate Pudding","Vanilla Pudding","Bread Pudding","Rice Pudding","Banana Pudding","Mango Pudding","Strawberry Pudding","Butterscotch Pudding","Caramel Pudding","Pumpkin Pudding"] 
+},
+
+Tourist:{
+    Mountain:["Himalayas","Nilgiris","Western Ghats","Mount Everest","Mount Fuji","Rocky Mountains","Andes","Alps","Ladakh","Appalachian Mountains"],
+    Hill:["Ooty","Kodaikanal","Yercaud","Coorg","Munnar","Lonavala","Mahabaleshwar","Araku Valley","Coonoor","Valparai"],
+    Temple:["Meenakshi Temple","Brihadeeswarar Temple","Rameswaram","Tirupati","Velankanni","Golden Temple","Somnath Temple","Kashi Vishwanath","Jagannath Temple","Konark Sun Temple"],
+    Nature:["Courtallam","Hogenakkal","Valparai","Yelagiri","Kutralam","Pichavaram","Sundarban","Chilika Lake","Dudhsagar Falls","Athirapally Falls"],
+    Historical:["Thanjavur","Hampi","Mahabalipuram","Red Fort","Taj Mahal","Kanyakumari","Ajanta Caves","Ellora Caves","Qutub Minar","Fatehpur Sikri"],
+    Beach:["Marina Beach","Elliot Beach","Silver Beach","Rock Beach","Ovari","Manapad","Kovalam Beach","Goa Beaches","Alleppey Beach","Kanyakumari Beach"] 
+},
+
+Dress:{
+    Men:["Shirt","T-Shirt","Jeans","Suit","Kurta","Sherwani","Jacket","Sweater","Shorts","Dhoti"], 
+    Women:["Saree","Salwar Kameez","Lehenga Choli","Kurta Pajama","Dhoti","Sherwani","Anarkali Suit","Pattu Pavadai","Lungi","Pheran"], 
+    Kids:["T-Shirt","Shorts","Dresses","Shirts","Jeans","Skirts","Kurta Pajama","Frocks","Overalls","Jumpsuits"],
+    Traditional:["Saree","Salwar Kameez","Lehenga Choli","Kurta Pajama","Dhoti","Sherwani","Anarkali Suit","Pattu Pavadai","Lungi","Pheran"],
+    Western:["Jeans","T-Shirt","Dress","Skirt","Shorts","Blouse","Jacket","Sweater","Cardigan","Hoodie"],
+    Footwear:["Sneakers","Sandals","Boots","Loafers","Heels","Flats","Slippers","Oxfords","Moccasins","Espadrilles"],
+    Accessories:["Watch","Sunglasses","Belt","Hat","Scarf","Necklace","Bracelet","Earrings","Ring","Bag"],
+    Occasion:["Party Wear","Casual Wear","Formal Wear","Ethnic Wear","Beach Wear","Winter Wear","Summer Wear","Office Wear","Wedding Wear","Festive Wear"]
+},
+
+Game:{
+    Adventure:["The Legend of Zelda","Uncharted","Tomb Raider","Assassin's Creed","Red Dead Redemption","The Witcher 3","Horizon Zero Dawn","God of War","Far Cry","Shadow of the Colossus"],
+    Action:["Call of Duty","Grand Theft Auto","Fortnite","Apex Legends","Overwatch","Battlefield","Rainbow Six Siege","PUBG","Doom Eternal","Gears of War"],
+    RPG:["The Elder Scrolls V: Skyrim","Final Fantasy VII","Mass Effect 2","Dark Souls","The Witcher 3","Persona 5","Dragon Age: Inquisition","Cyberpunk 2077","Divinity: Original Sin 2","Fallout 4"],
+    Horror:["Resident Evil 2","Silent Hill 2","Outlast","Amnesia: The Dark Descent","Dead Space","Alien: Isolation","The Evil Within","Until Dawn","Layers of Fear","P.T."],
+    Puzzle:["Portal 2","The Witness","Tetris Effect","Baba Is You","The Talos Principle","Limbo","Inside","Fez","Monument Valley","The Room"],
+    Racing:["Forza Horizon 4","Gran Turismo Sport","Need for Speed Heat","F1 2021","Dirt 5","Project CARS 3","Assetto Corsa Competizione","WRC 9","Burnout Paradise Remastered","Mario Kart 8 Deluxe"],
+    Cooking:["Overcooked 2","Cooking Simulator","Battle Chef Brigade","Cook, Serve, Delicious! 3?!","Chef: A Restaurant Tycoon Game","Food Truck Simulator","Diner Bros","Cake Bash","Good Pizza, Great Pizza","Pizza Connection 3"],
+    Brain:["Lumosity","Peak","Elevate","CogniFit","Brain Age","NeuroNation","Mensa Brain Training","Fit Brains Trainer","Brainwell","Mind Games"]
+},
+
+WebSeries:{
+    ChineseDrama:["Hidden Love","My Girlfriend is an Alien","Reborn","Go Ahead","Skate Into Love","My Lethal Man","Falling into your Smile","A River Runs Through It","Please Be My Family","Love O2O"],
+    KoreanDrama:["Crash Landing on You","Goblin","When Life Gives You Tangerines","Descendants of the Sun","My Love from the Star","Vincenzo","Start-Up","It's Okay to Not Be Okay","Big Mouth","Weightlifting Fairy Kim Bok-joo"],
+    JapaneseDrama:["Hana Yori Dango","Nodame Cantabile","Gokusen","1 Litre of Tears","Great Teacher Onizuka","Boys Over Flowers","Hana Kimi","Zettai Kareshi","Kimi wa Petto","Long Vacation"], 
+    ThaiDrama:["2gether: The Series","F4 Thailand","Love By Chance","The Gifted","A Love So Beautiful","My Husband in Law","Bad Buddy","He's Coming To Me","I Told Sunset About You","A Tale of Thousand Stars"]
+}
+};
+
+function loadSub(){
+    const cat=document.getElementById("category").value;
+    const sub=document.getElementById("subCategory");
+    sub.innerHTML="<option value=''>Select Sub Category</option>";
+    if(!cat) return;
+
+    for(let key in data[cat]){
+        let opt=document.createElement("option");
+        opt.value=key;
+        opt.text=key.toUpperCase();
+        sub.appendChild(opt);
+    }
+}
+
+function recommend(){
+    start=0;
+    show();
+}
+
+function recommendMore(){
+    start+=5;
+    show();
+}
+
+function show(){
+    const cat=document.getElementById("category").value;
+    const sub=document.getElementById("subCategory").value;
+    const res=document.getElementById("result");
+    res.innerHTML="";
+
+    if(!cat || !sub){
+        res.innerHTML="<li>Please select category and sub-category</li>";
+        return;
+    }
+
+    currentList=data[cat][sub] || [];
+
+    currentList.slice(start,start+5).forEach(item=>{
+        let li=document.createElement("li");
+        li.innerText=item;
+        res.appendChild(li);
+    });
+
+    if(start+5>=currentList.length){
+        res.innerHTML+="<li>No more recommendations</li>";
+    }
+}
+</script>
+
+</body>
+</html>
