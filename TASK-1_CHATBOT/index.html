@@ -1,0 +1,183 @@
+## 🔹 Task 1: Rule-Based Chatbot
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chatbot</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, hsl(225, 45%, 73%), #e896cc);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-container {
+    width: 380px;
+    background: #85a7fc;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-header {
+    background: #6c9eff;
+    color: white;
+    padding: 14px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.chat-body {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    background: #f7f9ff;
+}
+
+.message {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    max-width: 80%;
+    font-size: 14px;
+}
+
+.user {
+    background: #dbe7ff;
+    margin-left: auto;
+    text-align: right;
+}
+
+.bot {
+    background: #eeeeee;
+}
+
+.chat-footer {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.chat-footer input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    outline: none;
+}
+
+.chat-footer button {
+    margin-left: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #6c9eff;
+    color: white;
+    cursor: pointer;
+}
+
+.chat-footer button:hover {
+    background: #5a8ae6;
+}
+</style>
+</head>
+
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">🤖 Chatbot</div>
+
+    <div class="chat-body" id="chatBody">
+        <div class="message bot">Hello! How can i help you?😊</div>
+    </div>
+
+    <div class="chat-footer">
+        <input type="text" id="userInput" placeholder="Type a message..." onkeydown="handleEnter(event)">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+<script>
+function sendMessage() {
+    const input = document.getElementById("userInput");
+    const text = input.value.trim().toLowerCase();
+    if (text === "") return;
+
+    addMessage(text, "user");
+    input.value = "";
+
+    let reply = "Sorry, I can only answer simple questions.";
+
+    // Greeting based on time
+    if (text.includes("hi") || text.includes("hello")) {
+        const hour = new Date().getHours();
+
+        if (hour < 12) {
+            reply = "Good morning! How can I help you?";
+        } 
+        else if (hour < 17) {
+            reply = "Good afternoon! How can I help you?";
+        } 
+        else if (hour < 21) {
+            reply = "Good evening! How can I help you?";
+        } 
+        else {
+            reply = "Good night! How can I help you?";
+        }
+    }
+
+    else if (text.includes("name")) {
+        reply = "I am a simple rule-based chatbot.";
+    }
+
+    else if (text.includes("story")) {
+        reply = "Once upon a time, a student worked hard on small projects every day. Slowly, they gained confidence and succeeded. 😊";
+    }
+
+    else if (text.includes("joke")) {
+        reply = "Why did the computer go to school? Because it wanted to improve its memory!";
+    }
+
+    else if (text.includes("motivate") || text.includes("motivation")) {
+        reply = "Keep learning step by step. Small progress is still progress.";
+    }
+
+    else if (text.includes("date")) {
+        reply = "Today's date is " + new Date().toDateString();
+    }
+
+    else if (text.includes("time")) {
+        reply = "Current time is " + new Date().toLocaleTimeString();
+    }
+
+    else if (text.includes("bye")) {
+        reply = "Goodbye! Have a nice day.";
+    }
+
+    setTimeout(() => addMessage(reply, "bot"), 400);
+}
+
+function addMessage(message, sender) {
+    const chatBody = document.getElementById("chatBody");
+    const div = document.createElement("div");
+    div.className = "message " + sender;
+    div.innerText = message;
+    chatBody.appendChild(div);
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function handleEnter(event) {
+    if (event.key === "Enter") {
+        sendMessage();
+    }
+}
+</script>
+</body>
+</html> 
