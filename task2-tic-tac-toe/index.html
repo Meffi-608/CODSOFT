@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Tic Tac Toe </title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #a0aafd, hsl(341, 67%, 75%));
+    color: white;
+}
+
+.container {
+    background: #8e8e9122;
+    padding: 25px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    width: 340px;
+}
+
+h1 {
+    margin: 5px 0;
+}
+
+.controls {
+    margin: 10px 0;
+}
+
+select, button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 90px);
+    gap: 8px;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.cell {
+    width: 90px;
+    height: 90px;
+    background: hsl(188, 82%, 85%);
+    border-radius: 10px;
+    font-size: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.cell:hover {
+    background: lch(78.43% 23.33 227.12);}
+
+.win {
+    background: hwb(145 58% 8%) !important;
+    color: black;
+    font-weight: bold;
+}
+
+.score {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.popup {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    display: none;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+.popup-box {
+    background: hwb(253 71% 2%);
+    color: black;
+    padding: 20px;
+    border-radius: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Tic Tac Toe</h1>
+
+    <div class="controls">
+        <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+            <option value="unbeatable">Unbeatable 🔥</option>
+        </select>
+        <button onclick="resetGame()">Restart</button>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="score">
+        Player: <span id="p">0</span> |
+        AI: <span id="a">0</span> |
+        Draw: <span id="d">0</span>
+    </div>
+</div>
+
+<div class="popup" id="popup">
+    <div class="popup-box">
+        <h2 id="msg"></h2>
+        <button onclick="resetGame()">Play Again</button>
+    </div>
+</div>
+
+<script>
+let board = Array(9).fill("");
+let gameOver = false;
+
+let score = { p:0, a:0, d:0 };
+
+const boardDiv = document.getElementById("board");
+
+function draw() {
+    boardDiv.innerHTML = "";
+
+    board.forEach((val, i) => {
+        let cell = document.createElement("div");
+        cell.className = "cell";
+        cell.innerText = val;
+
+        cell.onclick = () => playerMove(i);
+
+        boardDiv.appendChild(cell);
+    });
+}
+
+function playerMove(i) {
+    if (board[i] || gameOver) return;
+
+    board[i] = "X";
+    draw();
+
+    if (check("X")) return endGame("You Win 🎉", "p");
+    if (drawCheck()) return endGame("Draw 🤝", "d");
+
+    setTimeout(aiMove, 250);
+}
+
+function aiMove() {
+    let mode = document.getElementById("difficulty").value;
+
+    let move;
+
+    if (mode === "easy" && Math.random() < 0.6) {
+        move = randomMove();
+    }
+    else if (mode === "medium" && Math.random() < 0.3) {
+        move = randomMove();
+    }
+    else if (mode === "hard" && Math.random() < 0.1) {
+        move = randomMove();
+    }
+    else {
+        move = bestMove();
+    }
+
+    board[move] = "O";
+    draw();
+
+    if (check("O")) return endGame("AI Wins 😈", "a");
+    if (drawCheck()) return endGame("Draw 🤝", "d");
+}
+
+function randomMove() {
+    let empty = board.map((v,i)=>v===""?i:null).filter(v=>v!==null);
+    return empty[Math.floor(Math.random()*empty.length)];
+}
+
+function bestMove() {
+    let bestScore = -Infinity;
+    let move;
+
+    for (let i=0;i<9;i++) {
+        if (board[i]==="") {
+            board[i]="O";
+            let score = minimax(0,false);
+            board[i]="";
+
+            if (score > bestScore) {
+                bestScore = score;
+                move = i;
+            }
+        }
+    }
+    return move;
+}
+
+function minimax(depth, isMax) {
+    if (check("O")) return 10 - depth;
+    if (check("X")) return depth - 10;
+    if (drawCheck()) return 0;
+
+    if (isMax) {
+        let best = -Infinity;
+        for (let i=0;i<9;i++) {
+            if (board[i]==="") {
+                board[i]="O";
+                best = Math.max(best, minimax(depth+1,false));
+                board[i]="";
+            }
+        }
+        return best;
+    } else {
+        let best = Infinity;
+        for (let i=0;i<9;i++) {
+            if (board[i]==="") {
+                board[i]="X";
+                best = Math.min(best, minimax(depth+1,true));
+                board[i]="";
+            }
+        }
+        return best;
+    }
+}
+
+function check(p) {
+    const w = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+
+    for (let c of w) {
+        if (board[c[0]]===p && board[c[1]]===p && board[c[2]]===p) {
+            highlight(c);
+            return true;
+        }
+    }
+    return false;
+}
+
+function highlight(c) {
+    let cells = document.querySelectorAll(".cell");
+    c.forEach(i => cells[i].classList.add("win"));
+}
+
+function drawCheck() {
+    return board.every(v => v!=="");
+}
+
+function endGame(text, who) {
+    gameOver = true;
+
+    if (who) score[who]++;
+
+    document.getElementById("p").innerText = score.p;
+    document.getElementById("a").innerText = score.a;
+    document.getElementById("d").innerText = score.d;
+
+    document.getElementById("msg").innerText = text;
+    document.getElementById("popup").style.display = "flex";
+}
+
+function resetGame() {
+    board = Array(9).fill("");
+    gameOver = false;
+    document.getElementById("popup").style.display = "none";
+    draw();
+}
+
+draw();
+</script>
+
+</body>
+</html>
